@@ -11,14 +11,23 @@ from aiohttp_apispec import (
 
 import db
 
-from schemas import Message, JobOffer, JobOfferWithPhones, PhoneListValidation, ShowOffer, SignOffer
+from schemas import (
+    Message,
+    JobOffer,
+    JobOfferWithPhones,
+    PhoneListValidation,
+    ShowOffer,
+    SignOffer
+)
+
+from utils import CustomException
 
 
 async def index(request: web.Request) -> web.Response:
     return web.Response(text='Hello! This is Super Job App!')
 
 
-async def get_job_offer_from_db(request):
+async def get_job_offer_data(request):
     job_offer_id = request['data']['job_offer_id']
 
     async with request.app['pool'].acquire() as connection:
@@ -53,7 +62,19 @@ async def get_job_offer_from_db(request):
                     users jo
                 ) AS t4 ON t4.id = t3.employer_id
         ''', job_offer_id)
-    return records
+
+        if len(records) == 0:
+            raise CustomException(message='No job offer has been found with id: {0}.'.format(job_offer_id), status=422)
+
+        phone = request['data']['phone']
+
+        data = [dict(q) for q in records]
+
+        data = [item for item in data if item['phone'] == phone]
+
+        if not data:
+            raise CustomException(message='User with phone number: {0} is not a candidate for job offer with id: {1}.'.format(phone, job_offer_id), status=403)
+    return data
 
 
 @docs(
@@ -97,14 +118,14 @@ async def create_job_offer(request: web.Request) -> web.json_response:
         ''')
         user_phones = [dict(q) for q in records]
         user_phones_dict = {element['id']: element['phone']
-                            for element in user_phones for k, v in element.items()}
+                            for element in user_phones if element['phone'] in phone_list_data for k, v in element.items()}
 
         found_phones = set(user_phones_dict.values()
                            ).intersection(set(phone_list_data))
         different_phones = list(set(phone_list_data) - found_phones)
 
         if different_phones:
-            return web.json_response({'message': 'Users with such phone numbers have been not found.',
+            return web.json_response({'message': 'Users with these phone numbers have been not found.',
                                       'phoneList': different_phones},
                                      status=422)
         async with connection.transaction():
@@ -146,21 +167,10 @@ async def create_job_offer(request: web.Request) -> web.json_response:
 )
 @request_schema(ShowOffer)
 async def get_job_offer_details(request: web.Request) -> web.json_response:
-    records = await get_job_offer_from_db(request)
-
-    job_offer_id = request['data']['job_offer_id']
-
-    if len(records) == 0:
-        return web.json_response({'message': 'No job offer has been found with id: {0}.'.format(job_offer_id)}, status=422)
-
-    phone = request['data']['phone']
-
-    data = [dict(q) for q in records]
-
-    data = [item for item in data if item['phone'] == phone]
-
-    if not data:
-        return web.json_response({'message': 'User with phone number: {0} is not a candidate for job offer with id: {1}.'.format(phone, job_offer_id)}, status=403)
+    try:
+        data = await get_job_offer_data(request)
+    except CustomException as e:
+        return web.json_response({'message': e.message}, status=e.status)
 
     return web.json_response(JobOffer(exclude=['employer_id']).dump(data[0]), status=200)
 
@@ -187,26 +197,14 @@ async def sign_job_offer(request: web.Request) -> web.json_response:
         return web.json_response({'message': 'Wrong start date provided. Start date should be between {0} and {1}, provided: {2}.'
                                   .format(min_date, max_date, start_date)}, status=422)
 
-    records = await get_job_offer_from_db(request)
-
-    job_offer_id = request['data']['job_offer_id']
-
-    if len(records) == 0:
-        return web.json_response({'message': 'No job offer has been found with id: {0}.'
-                                  .format(job_offer_id)}, status=422)
-
-    phone = request['data']['phone']
-
-    data = [dict(q) for q in records]
-
-    data = [item for item in data if item['phone'] == phone]
-
-    if not data:
-        return web.json_response({'message': 'User with phone number: {0} is not a candidate for job offer with id: {1}.'
-                                  .format(phone, job_offer_id)}, status=403)
+    try:
+        data = await get_job_offer_data(request)
+    except CustomException as e:
+        return web.json_response({'message': e.message}, status=e.status)
 
     async with request.app['pool'].acquire() as connection:
         candiate_id = data[0]['candidate_id']
+        job_offer_id = request['data']['job_offer_id']
 
         res = await connection.fetch('''
             UPDATE
