@@ -77,15 +77,15 @@ def sample_data(engine) -> None:
 
     conn.execute(
         users.insert(), [
-            {'group_id': 1, 'name': 'sberbank', 'phone': None},    # id = 1
-            {'group_id': 1, 'name': 'domclick', 'phone': None},    # id = 2
-            {'group_id': 2, 'name': 'candidate_1',
+            {'user_group_id': 1, 'name': 'sberbank', 'phone': None},    # id = 1
+            {'user_group_id': 1, 'name': 'domclick', 'phone': None},    # id = 2
+            {'user_group_id': 2, 'name': 'candidate_1',
                 'phone': '+111111111'},             # id = 3
-            {'group_id': 2, 'name': 'candidate_2',
+            {'user_group_id': 2, 'name': 'candidate_2',
                 'phone': '+222222222'},             # id = 4
-            {'group_id': 2, 'name': 'candidate_3',
+            {'user_group_id': 2, 'name': 'candidate_3',
                 'phone': '+333333333'},             # id = 5
-            {'group_id': 2, 'name': 'candidate_4',
+            {'user_group_id': 2, 'name': 'candidate_4',
                 'phone': '+444444444'},             # id = 6
         ]
     )

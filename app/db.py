@@ -33,7 +33,7 @@ users = Table(
     'users', meta,
 
     Column('id', Integer, primary_key=True),
-    Column('group_id', Integer, ForeignKey(
+    Column('user_group_id', Integer, ForeignKey(
         'user_groups.id', ondelete='CASCADE')),
     Column('name', String(50), nullable=False),
     Column('phone', String(50))
