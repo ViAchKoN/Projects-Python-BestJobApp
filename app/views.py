@@ -59,7 +59,7 @@ async def get_job_offer_data(request):
                 (SELECT
                     *
                 FROM
-                    users jo
+                    users u
                 ) AS t4 ON t4.id = t3.employer_id
         ''', job_offer_id)
 
