@@ -3,7 +3,7 @@ from aiohttp import web
 from typing import Optional, Mapping, NoReturn
 
 
-class MyException(Exception):
+class CustomException(Exception):
     def __init__(self, message, status):
         self.message = message
         self.status = status
@@ -16,12 +16,12 @@ async def error_handler(
     error_status_code: Optional[int] = None,
     error_headers: Optional[Mapping[str, str]] = None,
 ) -> NoReturn:
-    raise MyException(message=error.messages, status=422)
+    raise CustomException(message=error.messages, status=422)
 
 
 @web.middleware
 async def intercept_error(request, handler):
     try:
         return await handler(request)
-    except MyException as e:
+    except CustomException as e:
         return web.json_response(e.message, status=e.status)
