@@ -39,7 +39,7 @@ async def get_job_offer_from_db(request):
                 FROM
                     users u
                 WHERE
-                    group_id = 2) AS t2 ON t1.candidate_id = t2.id
+                    user_group_id = 2) AS t2 ON t1.candidate_id = t2.id
                 LEFT JOIN
                 (SELECT
                     *
@@ -69,8 +69,23 @@ async def get_job_offer_from_db(request):
 async def create_job_offer(request: web.Request) -> web.json_response:
     post_data = request['data']
     phone_list_data = post_data['phoneList']
+    employer_id_data = post_data['employer_id']
 
     async with request.app['pool'].acquire() as connection:
+        records = await connection.fetch('''
+            SELECT
+                *
+            FROM
+                users
+            WHERE
+                user_group_id = 1
+                AND
+                id = $1
+            ''', employer_id_data)
+        if len(records) == 0:
+            return web.json_response({'message': 'No employer with id: {0} has been found.'.format(employer_id_data)},
+                                     status=422)
+
         records = await connection.fetch('''
             SELECT
                 id, phone
@@ -78,7 +93,7 @@ async def create_job_offer(request: web.Request) -> web.json_response:
                 users
             WHERE
                 phone IS NOT NULL
-                AND group_id = 2
+                AND user_group_id = 2
         ''')
         user_phones = [dict(q) for q in records]
         user_phones_dict = {element['id']: element['phone']
@@ -105,7 +120,7 @@ async def create_job_offer(request: web.Request) -> web.json_response:
                 VALUES
                     ($1, $2, $3, $4, $5)
                 RETURNING id
-                ''', post_data['employer_id'],
+                ''', employer_id_data,
                 post_data['department'],
                 post_data['manager'],
                 post_data['salary'],
@@ -133,6 +148,8 @@ async def create_job_offer(request: web.Request) -> web.json_response:
 async def get_job_offer_details(request: web.Request) -> web.json_response:
     records = await get_job_offer_from_db(request)
 
+    job_offer_id = request['data']['job_offer_id']
+
     if len(records) == 0:
         return web.json_response({'message': 'No job offer has been found with id: {0}.'.format(job_offer_id)}, status=422)
 
@@ -145,7 +162,7 @@ async def get_job_offer_details(request: web.Request) -> web.json_response:
     if not data:
         return web.json_response({'message': 'User with phone number: {0} is not a candidate for job offer with id: {1}.'.format(phone, job_offer_id)}, status=403)
 
-    return web.json_response(JobOffer(exclude=['employer_id']).dumps(data[0]), status=200)
+    return web.json_response(JobOffer(exclude=['employer_id']).dump(data[0]), status=200)
 
 
 @docs(
@@ -156,7 +173,7 @@ async def get_job_offer_details(request: web.Request) -> web.json_response:
         200: {'description': 'Ok.', 'schema': JobOffer},
         401: {'description': 'Offer is not longer active.', 'schema': Message},
         403: {'description': 'Permission error.', 'schema': Message},
-        422: {'description': 'Validation error. ', 'schema': Message},
+        422: {'description': 'Validation error.', 'schema': Message},
     }
 )
 @request_schema(SignOffer)
@@ -172,12 +189,13 @@ async def sign_job_offer(request: web.Request) -> web.json_response:
 
     records = await get_job_offer_from_db(request)
 
+    job_offer_id = request['data']['job_offer_id']
+
     if len(records) == 0:
         return web.json_response({'message': 'No job offer has been found with id: {0}.'
                                   .format(job_offer_id)}, status=422)
 
     phone = request['data']['phone']
-    job_offer_id = request['data']['job_offer_id']
 
     data = [dict(q) for q in records]
 

@@ -2,7 +2,8 @@ from marshmallow import (
     Schema,
     fields,
     validate,
-    validates
+    validates,
+    ValidationError
 )
 
 class JobOffer(Schema):
