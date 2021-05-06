@@ -5,7 +5,6 @@ from datetime import datetime
 
 from marshmallow_dataclass import dataclass
 
-from aiohttp import web
 from asyncpg import connection
 
 
