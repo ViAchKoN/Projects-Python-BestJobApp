@@ -6,7 +6,6 @@ from datetime import (
 from marshmallow import (
     Schema,
     fields,
-    validate,
     validates,
     ValidationError
 )
