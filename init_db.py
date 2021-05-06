@@ -6,11 +6,11 @@ from sqlalchemy import create_engine
 
 from sqlalchemy.orm import sessionmaker
 
-from settings import CONFIG
+from app.settings import CONFIG
 
-from db import UserGroups, Users, JobOffers, JobCandidates
+from app.db import UserGroups, Users, JobOffers, JobCandidates
 
-from db import Base
+from app.db import Base
 
 
 DSN = "postgresql://{user}:{password}@{host}:{port}/{database}"
