@@ -1,3 +1,8 @@
+from datetime import (
+    datetime,
+    timedelta
+)
+
 from marshmallow import (
     Schema,
     fields,
@@ -41,3 +46,12 @@ class ShowOffer(Schema):
 
 class SignOffer(ShowOffer):
     start_date = fields.Date(required=True)
+
+    @validates('start_date')
+    def validate_start_date(self, data, **kwargs):
+        min_date = datetime.now().date() + timedelta(days=1)
+        max_date = datetime.now().date() + timedelta(days=30)
+
+        if not min_date <= data <= max_date:
+            raise ValidationError('Wrong start date provided. Start date should be between {0} and {1}, provided: {2}.'
+                                  .format(min_date, max_date, data))

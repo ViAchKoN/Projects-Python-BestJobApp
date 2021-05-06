@@ -2,11 +2,15 @@ import argparse
 
 from datetime import datetime
 
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine
 
-from app.settings import CONFIG
+from sqlalchemy.orm import sessionmaker
 
-from app.db import user_groups, users, job_offers, job_candidates
+from settings import CONFIG
+
+from db import UserGroups, Users, JobOffers, JobCandidates
+
+from db import Base
 
 
 DSN = "postgresql://{user}:{password}@{host}:{port}/{database}"
@@ -23,7 +27,7 @@ def parse_args() -> None:
     parser = argparse.ArgumentParser('Great Job app database initializer')
     parser.add_argument(
         'mode', type=str, help='Use "setup" to create db and fill it with test data '
-        'or "teardown" to delete all database data assossiated with this app'
+        'or "teardown" to delete all database data assossiated with this app.'
     )
     return parser.parse_args()
 
@@ -61,54 +65,42 @@ def teardown_db(config) -> None:
 
 
 def create_tables(engine) -> None:
-    meta = MetaData()
-    meta.create_all(bind=engine, tables=[
-                    user_groups, users, job_offers, job_candidates])
+    Base.metadata.create_all(engine)
 
 
 def sample_data(engine) -> None:
-    conn = engine.connect()
-    conn.execute(
-        user_groups.insert(), [
-            {'name': 'employer'},   # id = 1
-            {'name': 'candidate'}   # id = 2
-        ]
-    )
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
-    conn.execute(
-        users.insert(), [
-            {'user_group_id': 1, 'name': 'sberbank', 'phone': None},    # id = 1
-            {'user_group_id': 1, 'name': 'domclick', 'phone': None},    # id = 2
-            {'user_group_id': 2, 'name': 'candidate_1',
-                'phone': '+111111111'},             # id = 3
-            {'user_group_id': 2, 'name': 'candidate_2',
-                'phone': '+222222222'},             # id = 4
-            {'user_group_id': 2, 'name': 'candidate_3',
-                'phone': '+333333333'},             # id = 5
-            {'user_group_id': 2, 'name': 'candidate_4',
-                'phone': '+444444444'},             # id = 6
-        ]
-    )
+    session.add_all([
+        UserGroups(name='employer'),    # id = 1
+        UserGroups(name='candidate'),   # id = 2
 
-    conn.execute(
-        job_offers.insert(), [
-            {'employer_id': 1, 'department': 'department_1', 'manager': 'manager_1',
-             'salary': 500000, 'create_date': datetime.now()},                                             # id = 1
-            {'employer_id': 2, 'department': 'department_2', 'manager': 'manager_2',
-             'salary': 100000000, 'create_date': datetime.now()},                                          # id = 2
-        ]
-    )
+        Users(user_group_id=1, name='sberbank',
+              phone=None),               # id = 1
+        Users(user_group_id=1, name='domclick',
+              phone=None),               # id = 2
+        Users(user_group_id=2, name='candidate_1',
+              phone='+111111111'),      # id = 3
+        Users(user_group_id=2, name='candidate_2',
+              phone='+222222222'),      # id = 4
+        Users(user_group_id=2, name='candidate_3',
+              phone='+333333333'),      # id = 5
+        Users(user_group_id=2, name='candidate_4',
+              phone='+444444444'),      # id = 6
 
-    conn.execute(
-        job_candidates.insert(), [
-            {'job_offer_id': 1, 'candidate_id': 3},   # id = 1
-            {'job_offer_id': 1, 'candidate_id': 4},   # id = 2
-            {'job_offer_id': 2, 'candidate_id': 5},   # id = 3
-            {'job_offer_id': 2, 'candidate_id': 6}    # id = 4
-        ]
-    )
+        JobOffers(employer_id=1, department='department_1', manager='manager_1',
+                  salary=500000, create_date=datetime.now()),               # id = 1
+        JobOffers(employer_id=2, department='department_2', manager='manager_2',
+                  salary=100000000, create_date=datetime.now()),            # id = 2
 
-    conn.close()
+        JobCandidates(job_offer_id=1, candidate_id=3),      # id = 1
+        JobCandidates(job_offer_id=1, candidate_id=4),      # id = 2
+        JobCandidates(job_offer_id=2, candidate_id=5),      # id = 3
+        JobCandidates(job_offer_id=2, candidate_id=6),      # id = 4
+    ])
+
+    session.commit()
 
 
 if __name__ == '__main__':

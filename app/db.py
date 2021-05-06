@@ -1,13 +1,13 @@
 import asyncpg
 
 from sqlalchemy import (
-    MetaData, Table, Column, ForeignKey,
-    Integer, BigInteger, String, Boolean, Date
+    Column, ForeignKey, Integer, String, Date
 )
 
-__all__ = ['user_group', 'user', 'job_offers', 'job_candidates']
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 
-meta = MetaData()
+Base = declarative_base()
 
 
 async def init_pg(app):
@@ -22,40 +22,49 @@ async def init_pg(app):
         max_size=config['maxsize'],
     )
 
-user_groups = Table(
-    'user_groups', meta,
 
-    Column('id', Integer, primary_key=True),
-    Column('name', String(200), nullable=False)
-)
+class UserGroups(Base):
+    __tablename__ = 'user_groups'
 
-users = Table(
-    'users', meta,
+    id = Column(Integer, primary_key=True)
+    name = Column(String(200), nullable=False)
 
-    Column('id', Integer, primary_key=True),
-    Column('user_group_id', Integer, ForeignKey(
-        'user_groups.id', ondelete='CASCADE')),
-    Column('name', String(50), nullable=False),
-    Column('phone', String(50))
-)
 
-job_offers = Table(
-    'job_offers', meta,
+class Users(Base):
+    __tablename__ = 'users'
 
-    Column('id', Integer, primary_key=True),
-    Column('employer_id', Integer, ForeignKey('users.id', ondelete='CASCADE')),
-    Column('department', String(200), nullable=False),
-    Column('manager', String(50), nullable=False),
-    Column('salary', Integer),
-    Column('create_date', Date),
-    Column('accepted_by', Integer, ForeignKey('users.id', ondelete='CASCADE')),
-    Column('start_date', Date)
-)
+    id = Column(Integer, primary_key=True)
+    user_group_id = Column(Integer, ForeignKey(
+        'user_groups.id', ondelete='CASCADE'))
+    name = Column(String(50), nullable=False)
+    phone = Column(String(50))
 
-job_candidates = Table(
-    'job_candidates', meta,
+    user_group = relationship("UserGroups")
 
-    Column('id', Integer, primary_key=True),
-    Column('job_offer_id', Integer, ForeignKey('job_offers.id', ondelete='CASCADE')),
-    Column('candidate_id', Integer, ForeignKey('users.id', ondelete='CASCADE')),
-)
+
+class JobOffers(Base):
+    __tablename__ = 'job_offers'
+
+    id = Column(Integer, primary_key=True)
+    employer_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    department = Column(String(200), nullable=False)
+    manager = Column(String(50), nullable=False)
+    salary = Column(Integer)
+    create_date = Column(Date)
+    accepted_by = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    start_date = Column(Date)
+
+    employer = relationship("Users", foreign_keys=[employer_id])
+    accepted = relationship("Users", foreign_keys=[accepted_by])
+
+
+class JobCandidates(Base):
+    __tablename__ = 'job_candidates'
+
+    id = Column(Integer, primary_key=True)
+    job_offer_id = Column(Integer, ForeignKey(
+        'job_offers.id', ondelete='CASCADE'))
+    candidate_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+
+    job_offer = relationship("JobOffers")
+    candidate = relationship("Users")
