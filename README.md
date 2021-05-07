@@ -10,7 +10,7 @@ The process of signing an offer divided to three stages:
 
 Although only one candidate can sign a job offer, an employer can offer a job to multiple candidates. First one who signs gets the job.
 
-## Preparations
+## Preparation
 Important!
 Make sure that you have installed PostgreSQL database: http://www.postgresql.org/download/.
 
