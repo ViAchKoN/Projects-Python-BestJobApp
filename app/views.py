@@ -129,7 +129,7 @@ async def get_job_offer_details(request: web.Request) -> web.json_response:
     summary='Sign offer by canditate.',
     description='Sign offer by canditate.',
     responses={
-        200: {'description': 'Ok.', 'schema': JobOffer},
+        200: {'description': 'Ok.', 'schema': Message},
         401: {'description': 'Offer is not longer active.', 'schema': Message},
         403: {'description': 'Permission error.', 'schema': Message},
         422: {'description': 'Validation error.', 'schema': Message},
