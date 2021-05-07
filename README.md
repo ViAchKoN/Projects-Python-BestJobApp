@@ -1,7 +1,7 @@
 # Projects-Python-BestJobApp (Aiohttp)
 _____________________________
 ## Description
-This web app written on Aiohttp is an API which allows candidates to find a position with they find interesting, offered by an employer's representative.
+This web application written on Aiohttp is an API which allows candidates to find a position with they find interesting, offered by an employer's representative.
 The process of signing an offer divided to three stages:
 
 1. Creating a job offer by employer
