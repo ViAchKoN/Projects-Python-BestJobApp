@@ -1,4 +1,4 @@
-# Projects-Python-BestJobApp (Aiohttp)
+# BestJobApp (Aiohttp)
 _____________________________
 ## Description
 This web application written on Aiohttp is an API which allows candidates to find a position with they find interesting, offered by an employer's representative.
