@@ -27,7 +27,7 @@ def parse_args() -> None:
     parser = argparse.ArgumentParser('Great Job app database initializer')
     parser.add_argument(
         'mode', type=str, help='Use "setup" to create db and fill it with test data '
-        'or "teardown" to delete all database data assossiated with this app.'
+        'or "teardown" to delete all database data associated with this app.'
     )
     return parser.parse_args()
 
