@@ -14,6 +14,10 @@ Although only one candidate can sign a job offer, an employer can offer a job to
 Important!
 Make sure that you have installed PostgreSQL database: http://www.postgresql.org/download/.
 
+Create python virtual environment:
+```
+  python3 -m venv /path/to/new/virtual/environment
+```
 Install required modules:
 ```
   pip install -r requirements.txt
