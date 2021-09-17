@@ -18,7 +18,7 @@ Create python virtual environment:
 ```
   python3 -m venv /path/to/new/virtual/environment
 ```
-Install required modules:
+Activate venv and install required modules:
 ```
   pip install -r requirements.txt
 ```
